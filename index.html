@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Surveillance Flâneur</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: #121216;
+            --accent-green: #00ff66;
+            --accent-red: #ff3366;
+            --text-main: #f3f4f6;
+            --text-muted: #8e929a;
+            --border-color: #22222a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            letter-spacing: -0.05em;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--text-muted);
+        }
+
+        #fileInput { display: none; }
+
+        .btn-scan {
+            width: 100%;
+            background: var(--text-main);
+            color: var(--bg-color);
+            border: none;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-scan:hover { opacity: 0.9; }
+        .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .results-area {
+            margin-top: 2rem;
+            display: none;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .gauge-container {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-danger { background: rgba(255, 51, 102, 0.15); color: var(--accent-red); }
+        .badge-success { background: rgba(0, 255, 102, 0.15); color: var(--accent-green); }
+
+        .terminal-box {
+            background: #050507;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #d1d5db;
+            margin-top: 1.5rem;
+        }
+
+        .preview-img {
+            width: 100%;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            display: none;
+            object-fit: cover;
+            max-height: 300px;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>THE SURVEILLANCE FLÂNEUR</h1>
+        <p>Analyzing style architecture against automated tracking grids.</p>
+    </header>
+
+    <div class="main-container">
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <p id="uploadPrompt">Drop an image or click to choose local file</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <img id="preview" class="preview-img" alt="Scan preview">
+
+        <button id="scanBtn" class="btn-scan" disabled>INITIALIZE TELEMETRY SCAN</button>
+
+        <div id="loader" class="loader">Interrogating neural networks...</div>
+
+        <div id="results" class="results-area">
+            <div class="metric-row">
+                <div>
+                    <span id="styleBadge" class="badge badge-danger">Style Located</span>
+                    <div id="dominantStyle" style="margin-top: 0.25rem; font-weight: 600;">Streetwear</div>
+                </div>
+                <div class="gauge-container">
+                    <span id="stealthScore">0</span><span style="font-size: 0.9rem; color: var(--text-muted);">/100 INVIS</span>
+                </div>
+            </div>
+
+            <div id="critiqueBox" class="terminal-box"></div>
+        </div>
+    </div>
+
+    <script>
+        // Adjust this string to match your Laptop's Local IP when running on your phone
+        // e.g., 'http://192.168.1.45:8000'
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://127.0.0.1:8000' 
+            : `http://${window.location.hostname}:8000`;
+
+        const fileInput = document.getElementById('fileInput');
+        const scanBtn = document.getElementById('scanBtn');
+        const preview = document.getElementById('preview');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const loader = document.getElementById('loader');
+        const resultsArea = document.getElementById('results');
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    uploadPrompt.textContent = file.name;
+                    scanBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        scanBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI State adjustments
+            loader.style.display = 'block';
+            resultsArea.style.display = 'none';
+            scanBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/scan`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const payload = await response.json();
+
+                if (payload.success) {
+                    const data = payload.data;
+                    
+                    // Populate target components
+                    document.getElementById('dominantStyle').textContent = data.style_matrix.dominant_style;
+                    document.getElementById('stealthScore').textContent = data.stealth_metrics.invisibility_index;
+                    
+                    const critiqueBox = document.getElementById('critiqueBox');
+                    critiqueBox.textContent = `> flaneur@telemetry:~$ \n\n${data.voice_critique}`;
+
+                    const badge = document.getElementById('styleBadge');
+                    badge.textContent = data.stealth_metrics.status;
+                    
+                    if(data.stealth_metrics.invisibility_index > 50) {
+                        badge.className = "badge badge-success";
+                    } else {
+                        badge.className = "badge badge-danger";
+                    }
+
+                    resultsArea.style.display = 'block';
+                }
+            } catch (err) {
+                alert("Connection failed. Check if backend app.py is actively listening.");
+                console.error(err);
+            } finally {
+                loader.style.display = 'none';
+                scanBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
